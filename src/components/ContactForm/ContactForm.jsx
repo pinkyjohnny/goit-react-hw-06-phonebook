@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import PropTypes from 'prop-types';
 import {
   Button,
   Form,
@@ -7,31 +6,45 @@ import {
   Labelfirst,
   Labelsecond,
 } from './ContactForm.styled';
+import { useDispatch, useSelector } from 'react-redux';
 
-export const ContactForm = ({ onAddContact }) => {
-  const [contactData, setContactData] = useState({
-    name: '',
-    number: '',
-  });
+import { selectContacts } from 'redux/contacts/selector';
+import { nanoid } from 'nanoid';
+import { addContact } from 'redux/contacts/contactsSlice';
 
-  const handleInputChange = eve => {
-    setContactData({ ...contactData, [eve.target.name]: eve.target.value });
-  };
+const INITIAL_STATE = {
+  name: '',
+  number: '',
+};
+
+export const ContactForm = () => {
+  const [formData, setFormData] = useState(INITIAL_STATE);
+  const dispatch = useDispatch();
+  const { name, number } = formData;
+  const contacts = useSelector(selectContacts);
 
   const handleSubmit = e => {
     e.preventDefault();
-    const { name, number } = contactData;
-    onAddContact({
-      name,
-      number,
-    });
-    setContactData({ name: '', number: '' });
+
+    const existingContact = contacts.some(
+      newName => newName.name.toLowerCase() === name.toLowerCase()
+    );
+
+    if (existingContact) {
+      alert(`Contact with name ${name} is already exist`);
+      return;
+    }
+
+    dispatch(addContact({ name, number, id: nanoid() }));
+    setFormData(INITIAL_STATE);
   };
 
-  const { name, number } = contactData;
+  const handleInputChange = e =>
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+
   return (
     <div>
-      <Form action="" onSubmit={handleSubmit}>
+      <Form onSubmit={handleSubmit}>
         <Labelfirst>
           Name:
           <Input
@@ -42,7 +55,7 @@ export const ContactForm = ({ onAddContact }) => {
             required
           />
         </Labelfirst>
-        <Labelsecond htmlFor="">
+        <Labelsecond>
           Number:
           <Input
             onChange={handleInputChange}
@@ -56,8 +69,4 @@ export const ContactForm = ({ onAddContact }) => {
       </Form>
     </div>
   );
-};
-
-ContactForm.propTypes = {
-  onAddContact: PropTypes.func.isRequired,
 };
